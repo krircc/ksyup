@@ -1,0 +1,11 @@
+[package]
+name = "ksyup"
+version = "0.1.0"
+authors = ["krircc <krircc@qq.com>"]
+edition = "2018"
+
+[dependencies]
+ntex = "0.3"
+sqlx = { version = "0.5", features = [ "runtime-tokio-rustls", "postgres" ] }
+ntex-files = { git = "https://github.com/ntex-rs/ntex-extras.git" }
+chrono = "0.4"
