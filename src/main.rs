@@ -9,9 +9,7 @@ mod model;
 #[ntex::main]
 async fn main() -> io::Result<()> {
     env::set_var("RUST_LOG", "ksyup=info");
-
-    let pool = PgPool::connect("postgres://dbuser:password@localhost:5432/demodb")
-               .await.expect("unable to connect to database");
+    let pool = PgPool::connect(&dotenv::var("DATABASE_URL").unwrap()).await.unwrap();
    
     web::HttpServer::new(move || {
         web::App::new()
