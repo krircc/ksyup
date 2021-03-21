@@ -17,7 +17,7 @@ async fn main() -> io::Result<()> {
             .wrap(web::middleware::Logger::default())
             .service((
                 web::resource("/").route(web::get().to(api::index)),
-                // web::resource("/user").route(web::get().to(api::user)),
+                web::resource("/user").route(web::get().to(api::user)),
                 fs::Files::new("/static", "static/"),
             ))
     })

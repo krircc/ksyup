@@ -1,6 +1,6 @@
 use sqlx::postgres::PgPool;
 use ntex_files as fs;
-use ntex::web::{types, Error};
+use ntex::web::{types, HttpResponse, Error};
 use crate::model::User;
 
 pub async fn index() -> Result<fs::NamedFile, Error> {
@@ -8,10 +8,10 @@ pub async fn index() -> Result<fs::NamedFile, Error> {
 }
 
 
-// async fn user(
-//     data: types::Json<User>,
-//     dbpool: types::Data<sqlx::PgPool>,
-// ) -> Result<HttpResponse, Error> {
+pub async fn user( dbpool: types::Data<sqlx::PgPool> ) -> Result<HttpResponse, Error> {
 
-//     Ok(HttpResponse::Ok().body(rendered))
-// }
+    let auser = sqlx::query("SELECT * FROM users").fetch(&**dbpool);
+
+    // println!("-------{:?}--------------", &auser.email);
+    Ok(HttpResponse::Ok().json(&0))
+}
