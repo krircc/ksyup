@@ -85,14 +85,16 @@ pub async fn get_by_id(
 ) -> Result<HttpResponse, AppError> {
     let user = UserRepository::get_by_id(pool.get_ref(), id.into_inner()).await?;
     match user {
-        Some(user) => Ok(HttpResponse::Ok().json(&user)),
+        Some(user) => {
+            Ok(HttpResponse::Ok().json(&user))
+        }
         _ => Err(AppError::NotFound {
             message: String::from("No user found"),
         }),
     }
 }
 
-// Route: DELETE "/v1/users/{id}"
+// Route: DELETE "/v1/users/delete/{id}"
 pub async fn delete(pool: types::Data<PgPool>, id: types::Path<String>) -> Result<HttpResponse, AppError> {
     let result = UserRepository::delete(pool.get_ref(), id.into_inner()).await;
     match result {
@@ -111,7 +113,7 @@ pub async fn delete(pool: types::Data<PgPool>, id: types::Path<String>) -> Resul
     }
 }
 
-// Route: PUT "/v1/users/{id}"
+// Route: PUT "/v1/users/put/{id}"
 pub async fn update(
     pool: types::Data<PgPool>,
     id: types::Path<String>,

@@ -6,69 +6,67 @@ use crate::AppState;
 use ntex::service::{Service, Transform};
 use ntex::web::{
     HttpResponse,
-    Error,
     types::Data,
     dev::{WebRequest, WebResponse},
 };
 use ntex::http::{Method, StatusCode};
 use color_eyre::Result;
 use futures::{
-    future::{ok, Ready},
     Future,
+    future::{ok, Ready},
 };
 use sqlx::PgPool;
 use std::task::{Context, Poll};
-use std::{cell::RefCell, pin::Pin, rc::Rc};
+use std::pin::Pin;
 
 pub struct Authentication;
 
-impl<S: 'static, Err> Transform<S> for Authentication
+impl<S, E> Transform<S> for Authentication
 where
-    S: Service<Request = WebRequest<Err>, Response = WebResponse, Error = Error>,
+    S: Service<Request = WebRequest<E>, Response = WebResponse> + 'static,
     S::Future: 'static,
-    Err: 'static,
+    E: 'static,
 {
-    type Request = WebRequest<Err>;
+    type Request = WebRequest<E>;
     type Response = WebResponse;
-    type Error = Error;
+    type Error = S::Error;
     type Transform = AuthenticationMiddleware<S>;
     type InitError = ();
     type Future = Ready<Result<Self::Transform, Self::InitError>>;
 
     fn new_transform(&self, service: S) -> Self::Future {
         ok(AuthenticationMiddleware {
-            service: Rc::new(RefCell::new(service)),
+            service
         })
     }
 }
-#[derive(Clone)]
+
 pub struct AuthenticationMiddleware<S> {
-    service: Rc<RefCell<S>>,
+    service: S,
 }
 
-impl<S, Err> Service for AuthenticationMiddleware<S>
+impl<S, E> Service for AuthenticationMiddleware<S>
 where
-    S: Service<Request = WebRequest<Err>, Response = WebResponse, Error = Error> + 'static,
+    S: Service<Request = WebRequest<E>, Response = WebResponse> + 'static,
     S::Future: 'static,
-    Err: 'static,
+    E: 'static,
 {
-    type Request = WebRequest<Err>;
+    type Request = WebRequest<E>;
     type Response = WebResponse;
-    type Error = Error;
-    #[allow(clippy::type_complexity)]
+    type Error = S::Error;
     type Future = Pin<Box<dyn Future<Output = Result<Self::Response, Self::Error>>>>;
 
     fn poll_ready(&self, cx: &mut Context<'_>) -> Poll<Result<(), Self::Error>> {
-        // self.service.poll_ready(cx)
-        Poll::Pending
+        self.service.poll_ready(cx)
     }
 
-    fn call(&self, req: WebRequest<Err>) -> Self::Future {
-        let mut service_cloned = self.service.clone();
+    fn call(&self, req: WebRequest<E>) -> Self::Future {
+        let service_cloned = self.service.clone();
         let mut is_authorized = false;
         let mut user_id = String::new();
 
         if Method::OPTIONS == *req.method() {
+            //跨域在发送post请求时，会先发送一个option的请求，所以在jwt过滤器中，需要先将options请求放掉
             is_authorized = true;
         } else if let Some(app_state) = req.app_data::<Data<AppState>>() {
             let secret_key = &app_state.jwt_secret_key;
@@ -108,27 +106,18 @@ where
                 };
             }
 
-            Ok(req.into_response(
-                HttpResponse::Unauthorized()
-                    .json(&crate::errors::AppErrorMessage {
-                        code: StatusCode::UNAUTHORIZED.as_u16(),
-                        message: "Unauthorized".to_owned(),
-                    })
-                    .into_body(),
-            ))
-
-            // if is_authorized {
-            //     service_cloned.call(req).await
-            // } else {
-            //     Ok(req.into_response(
-            //         HttpResponse::Unauthorized()
-            //             .json(&crate::errors::AppErrorMessage {
-            //                 code: StatusCode::UNAUTHORIZED.as_u16(),
-            //                 message: "Unauthorized".to_owned(),
-            //             })
-            //             .into_body(),
-            //     ))
-            // }
+            if is_authorized {
+                service_cloned.call(req).await
+            } else {
+                Ok(req.into_response(
+                    HttpResponse::Unauthorized()
+                        .json(&crate::errors::AppErrorMessage {
+                            code: StatusCode::UNAUTHORIZED.as_u16(),
+                            message: "Unauthorized".to_owned(),
+                        })
+                        .into_body(),
+                ))
+            }
         })
     }
 }

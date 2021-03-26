@@ -4,29 +4,22 @@ use std::time::SystemTime;
 
 use ntex::http::header;
 use ntex::service::{Service, Transform};
-use ntex::web::{dev::{WebRequest, WebResponse}, Error};
+use ntex::web::dev::{WebRequest, WebResponse};
 use color_eyre::Result;
 use futures::future::{ok, Ready};
 use futures::Future;
 
-// There are two steps in middleware processing.
-// 1. Middleware initialization, middleware factory gets called with
-//    next service in chain as parameter.
-// 2. Middleware's call method gets called with normal request.
 pub struct Timer;
 
-// Middleware factory is `Transform` trait from actix-service crate
-// `S` - type of the next service
-// `B` - type of response's body
-impl<S, Err> Transform<S> for Timer
+impl<S, E> Transform<S> for Timer
 where
-    S: Service<Request = WebRequest<Err>, Response = WebResponse, Error = Error>,
+    S: Service<Request = WebRequest<E>, Response = WebResponse>,
     S::Future: 'static,
-    Err: 'static,
+    E: 'static,
 {
-    type Request = WebRequest<Err>;
+    type Request = WebRequest<E>;
     type Response = WebResponse;
-    type Error = Error;
+    type Error = S::Error;
     type Transform = TimerMiddleware<S>;
     type InitError = ();
     type Future = Ready<Result<Self::Transform, Self::InitError>>;
@@ -40,23 +33,22 @@ pub struct TimerMiddleware<S> {
     service: S,
 }
 
-impl<S, Err> Service for TimerMiddleware<S>
+impl<S, E> Service for TimerMiddleware<S>
 where
-    S: Service<Request = WebRequest<Err>, Response = WebResponse, Error = Error>,
+    S: Service<Request = WebRequest<E>, Response = WebResponse>,
     S::Future: 'static,
-    Err: 'static,
+    E: 'static,
 {
-    type Request = WebRequest<Err>;
+    type Request = WebRequest<E>;
     type Response = WebResponse;
-    type Error = Error;
-    #[allow(clippy::type_complexity)]
+    type Error = S::Error;
     type Future = Pin<Box<dyn Future<Output = Result<Self::Response, Self::Error>>>>;
 
     fn poll_ready(&self, cx: &mut Context<'_>) -> Poll<Result<(), Self::Error>> {
         self.service.poll_ready(cx)
     }
 
-    fn call(&self, req: WebRequest<Err>) -> Self::Future {
+    fn call(&self, req: WebRequest<E>) -> Self::Future {
         let now = SystemTime::now();
         let fut = self.service.call(req);
 

@@ -18,15 +18,14 @@ pub struct RequestId;
 // Middleware factory is `Transform` trait from actix-service crate
 // `S` - type of the next service
 // `B` - type of response's body
-impl<S, Err> Transform<S> for RequestId
+impl<S, E> Transform<S> for RequestId
 where
-    S: Service<Request = WebRequest<Err>, Response = WebResponse, Error = Error>,
+    S: Service<Request = WebRequest<E>, Response = WebResponse>,
     S::Future: 'static,
-    Err: 'static,
 {
-    type Request = WebRequest<Err>;
+    type Request = WebRequest<E>;
     type Response = WebResponse;
-    type Error = Error;
+    type Error = S::Error;
     type Transform = RequestIdMiddleware<S>;
     type InitError = ();
     type Future = Ready<Result<Self::Transform, Self::InitError>>;
@@ -40,15 +39,14 @@ pub struct RequestIdMiddleware<S> {
     service: S,
 }
 
-impl<S, Err> Service for RequestIdMiddleware<S>
+impl<S, E> Service for RequestIdMiddleware<S>
 where
-    S: Service<Request = WebRequest<Err>, Response = WebResponse, Error = Error>,
+    S: Service<Request = WebRequest<E>, Response = WebResponse>,
     S::Future: 'static,
-    Err: 'static,
 {
-    type Request = WebRequest<Err>;
+    type Request = WebRequest<E>;
     type Response = WebResponse;
-    type Error = Error;
+    type Error = S::Error;
     #[allow(clippy::type_complexity)]
     type Future = Pin<Box<dyn Future<Output = Result<Self::Response, Self::Error>>>>;
 
@@ -56,7 +54,7 @@ where
         self.service.poll_ready(cx)
     }
 
-    fn call(&self, req: WebRequest<Err>) -> Self::Future {
+    fn call(&self, req: WebRequest<E>) -> Self::Future {
         let fut = self.service.call(req);
 
         Box::pin(async move {

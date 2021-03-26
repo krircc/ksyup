@@ -14,7 +14,6 @@ path = "src/main.rs"
 
 [dependencies]
 ntex = "0.3"
-ntex-cors = "0.1"
 ntex-files = { git = "https://github.com/ntex-rs/ntex-extras.git" }
 chrono = { version = "0.4", features = ["serde"]}
 dotenv = "0.15"
@@ -32,5 +31,5 @@ jsonwebtoken = "7.2.0"
 log = "0.4.11"
 reqwest = "0.10.8"
 sha2 = "0.9"
-sqlx = { version = "0.5", default-features = false, features = ["runtime-tokio-rustls", "macros", "postgres", "uuid", "chrono", "json","migrate"] }
+sqlx = { version = "0.5", default-features = false, features = ["runtime-tokio-rustls", "macros", "postgres", "uuid", "chrono", "json"] }
 uuid = { version = "0.8", features = ["serde", "v4"] }

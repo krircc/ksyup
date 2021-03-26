@@ -1,6 +1,6 @@
 //! List all server routes
 
-use crate::handlers;
+use crate::{middlewares, handlers};
 use ntex::web;
 
 /// Defines Web's routes
@@ -17,11 +17,11 @@ pub fn api(cfg: &mut web::ServiceConfig) {
             .route("/register", web::post().to(handlers::users::register))
             .service(
                 web::scope("/users")
-                    .wrap(crate::middlewares::auth::Authentication)
+                    .wrap(middlewares::auth::Authentication)
                     .route("", web::get().to(handlers::users::get_all))
                     .route("/{id}", web::get().to(handlers::users::get_by_id))
-                    .route("/{id}", web::delete().to(handlers::users::delete))
-                    .route("/{id}", web::put().to(handlers::users::update)),
+                    .route("/delete/{id}", web::delete().to(handlers::users::delete))
+                    .route("/put/{id}", web::put().to(handlers::users::update)),
             ),
     );
 }

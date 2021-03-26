@@ -79,7 +79,7 @@ impl UserRepository {
         let result = sqlx::query!("SELECT * FROM nusers WHERE id = $1 AND deleted_at IS NULL", id)
         .fetch_optional(pool)
         .await?;
-
+        
         match result {
             Some(result) => Ok(Some(User::init(
                 result.id,
