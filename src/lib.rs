@@ -16,7 +16,6 @@ mod routes;
 use crate::config::Config;
 use ntex::web::middleware::Logger;
 use ntex::web::{App, HttpServer};
-use ntex::http::header;
 use color_eyre::Result;
 use sqlx::{Postgres, Pool};
 use ntex_files;

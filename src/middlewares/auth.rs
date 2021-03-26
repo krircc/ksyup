@@ -66,9 +66,14 @@ where
         let mut user_id = String::new();
 
         if Method::OPTIONS == *req.method() {
-            //跨域在发送post请求时，会先发送一个option的请求，所以在jwt过滤器中，需要先将options请求放掉
-            is_authorized = true;
-        } else if let Some(app_state) = req.app_data::<Data<AppState>>() {
+            //跨域在发送复杂post请求时，会先发送一个option的请求，所以在jwt过滤器中，需要先将options请求放掉
+            // https://my.oschina.net/u/4290053/blog/4184173
+            Box::pin(async move {
+                return true;
+            });
+        } 
+        
+        if let Some(app_state) = req.app_data::<Data<AppState>>() {
             let secret_key = &app_state.jwt_secret_key;
             let token = req
                 .headers()
