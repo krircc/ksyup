@@ -9,15 +9,8 @@ use futures::future::{ok, Ready};
 use futures::Future;
 use uuid::Uuid;
 
-// There are two steps in middleware processing.
-// 1. Middleware initialization, middleware factory gets called with
-//    next service in chain as parameter.
-// 2. Middleware's call method gets called with normal request.
 pub struct RequestId;
 
-// Middleware factory is `Transform` trait from actix-service crate
-// `S` - type of the next service
-// `B` - type of response's body
 impl<S, E> Transform<S> for RequestId
 where
     S: Service<Request = WebRequest<E>, Response = WebResponse>,

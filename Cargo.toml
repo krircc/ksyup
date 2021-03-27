@@ -14,6 +14,7 @@ path = "src/main.rs"
 
 [dependencies]
 ntex = "0.3"
+ntex-cors = { git = "https://github.com/ntex-rs/ntex-extras.git" }
 ntex-files = { git = "https://github.com/ntex-rs/ntex-extras.git" }
 chrono = { version = "0.4", features = ["serde"]}
 dotenv = "0.15"
