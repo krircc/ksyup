@@ -18,6 +18,7 @@ use futures::{
 use sqlx::PgPool;
 use std::task::{Context, Poll};
 use std::pin::Pin;
+use std::rc::Rc;
 
 pub struct Authentication;
 
@@ -36,13 +37,13 @@ where
 
     fn new_transform(&self, service: S) -> Self::Future {
         ok(AuthenticationMiddleware {
-            service
+            service: Rc::new(service)
         })
     }
 }
 
 pub struct AuthenticationMiddleware<S> {
-    service: S,
+    service: Rc<S>,
 }
 
 impl<S, E> Service for AuthenticationMiddleware<S>
